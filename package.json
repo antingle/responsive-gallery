@@ -1,5 +1,5 @@
 {
-  "name": "gallery-test",
+  "name": "responsive-gallery",
   "private": true,
   "scripts": {
     "dev": "next dev",
