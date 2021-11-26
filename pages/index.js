@@ -1,46 +1,60 @@
-import PageLoader from "next/dist/client/page-loader";
 import Head from "next/head";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import Masonry from "react-masonry-css";
 import Loader from "../components/Loader";
 import styles from "../styles/Home.module.css";
+import smoothscroll from "smoothscroll-polyfill";
 
 export default function Home() {
   const [data, setData] = useState([]);
+  const [mainPhoto, setMainPhoto] = useState(null);
+  const [username, setUsername] = useState(null);
+  const [morePhotos, setMorePhotos] = useState(true);
   const [pageNumber, setPageNumber] = useState(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    smoothscroll.polyfill();
     window.addEventListener("scroll", scrolling_function);
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    let myHeaders = new Headers();
-    myHeaders.append(
-      "Authorization",
-      "Client-ID EUfSGhtJ1MMxbtYvals9hmM1p6mRdiGXw6k77oHT5eo"
-    );
-
-    let requestOptions = {
-      method: "GET",
-      headers: myHeaders,
-      redirect: "follow",
-    };
 
     fetch(
-      `https://api.unsplash.com/photos?page=${pageNumber}&per_page=20&order_by=popular`,
+      `https://api.unsplash.com/photos/random?orientation=landscape`,
       requestOptions
     )
       .then((response) => response.text())
       .then((result) => {
-        setData([...data, ...JSON.parse(result)]);
+        const resultJson = JSON.parse(result);
+        setUsername(resultJson.user.username);
+        setMainPhoto(resultJson);
         setLoading(false);
         window.addEventListener("scroll", scrolling_function);
       })
       .catch((error) => console.log("error", error));
-  }, [pageNumber]);
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    if (!username || !morePhotos) return;
+
+    fetch(
+      `https://api.unsplash.com/users/${username}/photos?page=${pageNumber}&per_page=30&order_by=latest`,
+      requestOptions
+    )
+      .then((response) => response.text())
+      .then((result) => {
+        const resultJson = JSON.parse(result);
+        if (resultJson.length == 0) {
+          setLoading(false);
+          setMorePhotos(false);
+          return;
+        }
+        setData([...data, ...resultJson]);
+        setLoading(false);
+        window.addEventListener("scroll", scrolling_function);
+      })
+      .catch((error) => console.log("error", error));
+  }, [pageNumber, username]);
 
   const scrolling_function = () => {
     if (
@@ -60,29 +74,69 @@ export default function Home() {
     );
   };
 
+  const myHeaders = new Headers();
+  myHeaders.append(
+    "Authorization",
+    "Client-ID EUfSGhtJ1MMxbtYvals9hmM1p6mRdiGXw6k77oHT5eo"
+  );
+  const requestOptions = {
+    method: "GET",
+    headers: myHeaders,
+    redirect: "follow",
+  };
+
   return (
     <div>
       <Head>
-        <title>My Gallery</title>
+        <title>Gallery</title>
         <meta name="description" content="Cool" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {data[6] != null && (
+      {mainPhoto != null && (
         <div className={styles.mainContainer}>
           <Image
-            key={data[6]?.id}
+            key={mainPhoto?.id}
             layout="fill"
             placeholder="blur"
-            blurDataURL={data[6]?.urls?.small}
-            src={data[6]?.urls?.full}
+            blurDataURL={mainPhoto?.urls?.regular}
+            src={mainPhoto?.urls?.full}
             objectFit="cover"
-            quality={100}
+            quality={75}
             className={styles.mainImage}
           />
           <header className={styles.mainHeader}>
-            <h1 className={styles.mainHeading}>Jane's Graduation</h1>
-            <time className={styles.time}>November 23rd, 2021</time>
+            <a
+              href={mainPhoto?.user?.links?.html}
+              target="_blank"
+              className={styles.userContainer}
+            >
+              <div className={styles.userProfile}>
+                <Image
+                  key={mainPhoto?.user?.id}
+                  width="100%"
+                  height="100%"
+                  objectFit="cover"
+                  placeholder="blur"
+                  blurDataURL={mainPhoto?.user?.profile_image?.small}
+                  src={mainPhoto?.user?.profile_image?.large}
+                  quality={75}
+                  className={styles.profileImage}
+                  alt={mainPhoto?.user?.name}
+                />
+              </div>
+              <p style={{ textAlign: "center" }}>{mainPhoto?.user?.username}</p>
+            </a>
+            <h1 className={styles.mainHeading}>
+              {mainPhoto?.user?.first_name}'s Gallery
+            </h1>
+            <time className={styles.time}>
+              {new Date(mainPhoto.created_at).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </time>
             <button
               className={styles.mainButton}
               onClick={() =>
@@ -104,9 +158,8 @@ export default function Home() {
         columnClassName="my-masonry-grid_column"
       >
         {data.map((photo) => (
-          <div>
+          <div style={{ position: "relative" }} key={photo?.id}>
             <Image
-              key={photo?.id}
               onClick={imageOverlay}
               className={styles.image}
               height={photo?.height}
@@ -115,12 +168,19 @@ export default function Home() {
               blurDataURL={photo?.urls?.thumb}
               src={photo?.urls?.regular}
               objectFit="cover"
+              alt={photo?.alt_description}
               quality={75}
             />
+            <p className={styles.imageLikes}>&hearts; {photo?.likes}</p>
           </div>
         ))}
       </Masonry>
-      <Loader />
+      {loading && <Loader />}
+      {!morePhotos && (
+        <p className={styles.bottomText}>
+          You've reached the end of {mainPhoto.user.name}'s Gallery
+        </p>
+      )}
     </div>
   );
 }

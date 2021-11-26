@@ -21,7 +21,7 @@
 }
 
 .mainImage {
-  filter: brightness(80%) !important;
+  filter: brightness(70%) !important;
 }
 
 .mainHeader {
@@ -44,6 +44,7 @@
   font-size: 12pt;
   font-weight: 300;
   transition: all 0.125s;
+  margin-bottom: 3em;
 }
 
 .mainHeading {
@@ -51,6 +52,7 @@
   margin: 0;
   margin-bottom: 1rem;
   transition: all 0.25s;
+  text-align: center;
 }
 
 .time {
@@ -63,6 +65,34 @@
 .mainButton:hover {
   cursor: pointer;
   background-color: rgba(0, 0, 0, 0.2);
+}
+
+.imageLikes {
+  position: absolute;
+  z-index: 1;
+  color: white;
+  right: 0;
+  bottom: 0;
+  margin-right: 1em;
+}
+
+.bottomText {
+  margin: 4em auto;
+  text-align: center;
+}
+
+.userProfile {
+  width: 5em;
+  height: 5em;
+  margin: auto;
+}
+
+.userContainer {
+  margin-bottom: 1em;
+}
+
+.profileImage {
+  border-radius: 50%;
 }
 
 @media screen and (max-width: 980px) {
