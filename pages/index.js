@@ -175,12 +175,19 @@ export default function Home() {
           </div>
         ))}
       </Masonry>
-      {loading && <Loader />}
-      {!morePhotos && (
-        <p className={styles.bottomText}>
-          You've reached the end of {mainPhoto.user.name}'s Gallery
-        </p>
-      )}
+      {morePhotos && <Loader />}
+
+      <button
+        className={styles.backToTopButton}
+        onClick={() =>
+          scrollTo({
+            top: innerHeight,
+            behavior: "smooth",
+          })
+        }
+      >
+        Back To Top
+      </button>
     </div>
   );
 }
