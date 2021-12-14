@@ -16,5 +16,5 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-![Center Image](sample/image1.png)
-![Gallery Section](sample/image2.png)
+![Center Image](sample/image1.jpg)
+![Gallery Section](sample/image2.jpg)
