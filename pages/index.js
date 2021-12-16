@@ -66,11 +66,11 @@ export default function Home() {
     if (node) observerMainPhoto.current.observe(node);
   }, []);
 
+  if (initialLoading) return <Loader />;
   if (error || initialError || data.length === 0) {
     console.log(initialError, error);
     return <p>API Rate Limit Exceeded :( Please come back later</p>;
   }
-  if (initialLoading) return <Loader />;
   return (
     <div style={{ position: "relative" }}>
       <Head>
