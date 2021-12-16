@@ -6,21 +6,25 @@ import Loader from "../components/Loader";
 import styles from "../styles/Home.module.css";
 import useFetch from "../hooks/useFetch";
 import { animateScroll as scroll } from "react-scroll";
+import Lightbox from "react-image-lightbox";
+import Icon from "../components/Icon";
 
 export default function Home() {
   const [url, setURL] = useState(null); // set url to get a user's photos
   const [pageNumber, setPageNumber] = useState(1); // page of the user's photos
   const [backToTopButton, setBackToTopButton] = useState(false); // state of back to top button
+  const [sliderOpen, setSliderOpen] = useState(false); // state of React Lightbox
+  const [photoIndex, setPhotoIndex] = useState(1); // state of React Lightbox
 
   // fetch main photo which also gives username to load gallery images
   const {
     loading: initialLoading,
     error: initialError,
     data: mainPhoto,
-  } = useFetch(`/api/randomphoto`, { method: "GET" });
+  } = useFetch(`/api/randomphoto`);
 
   // fetch gallery and pagination
-  const { loading, error, data, hasMore } = useFetch(url, { method: "GET" });
+  const { loading, error, data, hasMore } = useFetch(url);
 
   useEffect(() => {
     if (initialLoading) return;
@@ -58,17 +62,8 @@ export default function Home() {
     if (node) observerMainPhoto.current.observe(node);
   }, []);
 
-  const imageOverlay = (event) => {
-    console.log(event.target);
-    event.target.setAttribute(
-      "class",
-      event.target.getAttribute("class") + " overlay"
-    );
-  };
-
-  if (error || initialError) return <p>{error}</p>;
+  if (error || initialError) return <p>{JSON.stringify(error)}</p>;
   if (initialLoading) return <Loader />;
-
   return (
     <div style={{ position: "relative" }}>
       <Head>
@@ -165,12 +160,13 @@ export default function Home() {
         {data.map((photo, index) => {
           return (
             <div
+              className={styles.imageContainer}
               style={{ position: "relative" }}
               key={photo?.id}
               ref={data.length === index + 1 ? lastElement : null}
+              onClick={() => [setSliderOpen(true), setPhotoIndex(index)]}
             >
               <Image
-                onClick={imageOverlay}
                 className={styles.image}
                 height={photo?.height}
                 width={photo?.width}
@@ -186,6 +182,50 @@ export default function Home() {
           );
         })}
       </Masonry>
+      {sliderOpen && (
+        <Lightbox
+          mainSrc={data[photoIndex].urls?.regular}
+          mainSrcThumbnail={data[photoIndex].urls?.thumb}
+          nextSrc={
+            data[
+              photoIndex === data.length - 1 ? data.length - 1 : ++photoIndex
+            ].urls?.regular
+          }
+          nextSrcThumbnail={
+            data[
+              photoIndex === data.length - 1 ? data.length - 1 : ++photoIndex
+            ].urls?.thumb
+          }
+          prevSrc={data[!photoIndex ? 0 : --photoIndex].urls?.regular}
+          prevSrcThumbnail={data[!photoIndex ? 0 : --photoIndex].urls?.thumb}
+          onCloseRequest={() => setSliderOpen(false)}
+          onMovePrevRequest={() =>
+            setPhotoIndex((prev) => (prev === 0 ? prev : --prev))
+          }
+          onMoveNextRequest={() => {
+            if (photoIndex >= data.length - 2 && hasMore) ++pageNumber;
+            setPhotoIndex((prev) => (prev === data.length - 1 ? prev : ++prev));
+          }}
+          imageCaption={data[photoIndex].description}
+          discourageDownloads={true}
+          toolbarButtons={[
+            <Icon
+              key="download"
+              aria-label="Download"
+              icon="fa-download"
+              href={`api/downloadImage?url=${data[photoIndex].links.download_location}&name=${data[photoIndex].id}`}
+            />,
+            <Icon
+              key="link"
+              aria-label="Original Image"
+              target="_blank"
+              rel="noreferrer"
+              icon="fa-external-link"
+              href={data[photoIndex].links.html}
+            />,
+          ]}
+        />
+      )}
       {loading && <Loader />}
     </div>
   );

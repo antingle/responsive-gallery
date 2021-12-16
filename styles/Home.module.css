@@ -1,18 +1,9 @@
-.image {
-  transition: opacity 0.125s ease-in-out;
-}
-
-.image:hover {
-  opacity: 0.9;
+.imageContainer:hover {
   cursor: zoom-in;
 }
 
-.pageNumber {
-  position: fixed;
-  z-index: 100;
-  text-align: center;
-  color: white;
-  margin: auto;
+.image {
+  transition: all 0.125s ease-in-out;
 }
 
 .mainContainer {
@@ -43,7 +34,7 @@
   font-family: inherit;
   font-size: 12pt;
   font-weight: 300;
-  transition: all 0.25s;
+  transition: all 0.125s;
   margin-bottom: 3em;
 }
 
@@ -51,7 +42,7 @@
   font-size: 60pt;
   margin: 0;
   margin-bottom: 1rem;
-  transition: all 0.25s;
+  transition: all 0.125s;
   text-align: center;
 }
 
@@ -59,7 +50,7 @@
   margin-bottom: 5em;
   font-size: 16pt;
   font-weight: 100;
-  transition: all 0.25s;
+  transition: all 0.125s;
 }
 
 .mainButton:hover {
@@ -79,7 +70,7 @@
 }
 
 .whiteButton {
-  z-index: 10;
+  z-index: 1;
   width: 4em;
   height: 4em;
   text-align: center;
@@ -90,7 +81,7 @@
   border-radius: 50%;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.25s ease-in-out;
+  transition: all 0.125s ease-in-out;
   opacity: 0.9;
   box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
@@ -120,7 +111,7 @@ cursor: unset;
   width: 5em;
   height: 5em;
   margin: auto;
-  transition: all 0.25s;
+  transition: all 0.125s;
 }
 
 .userContainer {
@@ -140,7 +131,6 @@ cursor: unset;
     font-size: 45pt;
   }
   .whiteButton {
-    z-index: 10;
     width: 3.5em;
     height: 3.5em;
   }
@@ -178,8 +168,14 @@ cursor: unset;
   }
 
   .whiteButton {
-    z-index: 10;
     width: 3em;
     height: 3em;
+  }
+}
+
+/* no zooming in on hover on mobile */
+@media screen and (min-width: 768px) {
+  .imageContainer:hover .image {
+    transform: scale(1.05);
   }
 }
