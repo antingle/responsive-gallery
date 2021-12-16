@@ -28,11 +28,15 @@ export default function Home() {
 
   useEffect(() => {
     if (initialLoading) return;
-    setURL(
-      `/api/photos?user=${
-        mainPhoto.user.username
-      }&page=${pageNumber}&per_page=${15}`
-    );
+    try {
+      setURL(
+        `/api/photos?user=${
+          mainPhoto.user.username
+        }&page=${pageNumber}&per_page=${15}`
+      );
+    } catch (e) {
+      console.log(e);
+    }
   }, [mainPhoto, pageNumber, initialLoading]);
 
   // load in more photos when at last photo
@@ -62,9 +66,9 @@ export default function Home() {
     if (node) observerMainPhoto.current.observe(node);
   }, []);
 
-  if (error || initialError) {
+  if (error || initialError || data.length === 0) {
     console.log(initialError, error);
-    return <p>An error has occured.</p>;
+    return <p>API Rate Limit Exceeded :( Please come back later</p>;
   }
   if (initialLoading) return <Loader />;
   return (
@@ -210,7 +214,7 @@ export default function Home() {
             setPhotoIndex((prev) => (prev === data.length - 1 ? prev : ++prev));
           }}
           imageCaption={data[photoIndex].description}
-          discourageDownloads={true}
+          // discourageDownloads={true}
           toolbarButtons={[
             <Icon
               key="download"

@@ -19,18 +19,19 @@ export default function useFetch(url) {
           setData((prev) => [...prev, ...json]);
           setHasMore(true);
         } else {
-          setData(json);
+          if (data.length === 0) setData(json);
           setHasMore(false);
         }
         setLoading(false);
-      } catch (error) {
-        console.log(error);
-        setError(error);
+      } catch (e) {
+        setError(e);
         setLoading(false);
       }
     };
     url && fetchData();
     return () => controller.abort();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
   return { loading, error, data, hasMore };
