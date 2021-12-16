@@ -67,9 +67,12 @@ export default function Home() {
   }, []);
 
   if (initialLoading) return <Loader />;
-  if (error || initialError || data.length === 0) {
-    console.log(initialError, error);
-    return <p>API Rate Limit Exceeded :( Please come back later</p>;
+  if (error || initialError) {
+    return (
+      <h2 style={{ textAlign: "center" }}>
+        {initialError?.message || error?.message}
+      </h2>
+    );
   }
   return (
     <div style={{ position: "relative" }}>

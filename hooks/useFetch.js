@@ -15,6 +15,10 @@ export default function useFetch(url) {
       try {
         const res = await fetch(url, { method: "GET", signal: signal });
         const json = await res.json();
+
+        if (res.status === 500 || 403)
+          throw new Error("API Rate Limit Exceeded :( Please come back later");
+
         if (json.length > 0) {
           setData((prev) => [...prev, ...json]);
           setHasMore(true);
