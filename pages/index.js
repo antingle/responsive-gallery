@@ -62,7 +62,10 @@ export default function Home() {
     if (node) observerMainPhoto.current.observe(node);
   }, []);
 
-  if (error || initialError) return <p>{JSON.stringify(error)}</p>;
+  if (error || initialError) {
+    console.log(initialError, error);
+    return <p>An error has occured.</p>;
+  }
   if (initialLoading) return <Loader />;
   return (
     <div style={{ position: "relative" }}>
