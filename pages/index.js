@@ -1,74 +1,62 @@
 import Head from "next/head";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import Masonry from "react-masonry-css";
 import Loader from "../components/Loader";
 import styles from "../styles/Home.module.css";
-import smoothscroll from "smoothscroll-polyfill";
+import useFetch from "../hooks/useFetch";
+import { animateScroll as scroll } from "react-scroll";
 
 export default function Home() {
-  const [data, setData] = useState([]); // holds the data for the gallery of photos
-  const [mainPhoto, setMainPhoto] = useState(null); // main central photo
-  const [username, setUsername] = useState(null); // username of the main photo
-  const [morePhotos, setMorePhotos] = useState(true); // indicate if the user has more photos
+  const [url, setURL] = useState(null); // set url to get a user's photos
   const [pageNumber, setPageNumber] = useState(1); // page of the user's photos
   const [backToTopButton, setBackToTopButton] = useState(false); // state of back to top button
 
-  const scrollingFunction = useCallback(() => {
-    if (window.scrollY < window.innerHeight) setBackToTopButton(false);
-    else setBackToTopButton(true);
+  // fetch main photo which also gives username to load gallery images
+  const {
+    loading: initialLoading,
+    error: initialError,
+    data: mainPhoto,
+  } = useFetch(`/api/randomphoto`, { method: "GET" });
 
-    if (
-      window.innerHeight + window.scrollY >=
-      document.body.offsetHeight - 10
-    ) {
-      if (morePhotos) setPageNumber((prevPage) => ++prevPage);
-    }
+  // fetch gallery and pagination
+  const { loading, error, data, hasMore } = useFetch(url, { method: "GET" });
+
+  useEffect(() => {
+    if (initialLoading) return;
+    setURL(
+      `/api/photos?user=${
+        mainPhoto.user.username
+      }&page=${pageNumber}&per_page=${15}`
+    );
+  }, [mainPhoto, pageNumber, initialLoading]);
+
+  // load in more photos when at last photo
+  const observer = useRef();
+  const lastElement = useCallback(
+    (node) => {
+      if (loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPageNumber((prevPageNumber) => ++prevPageNumber);
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [loading, hasMore]
+  );
+
+  // show back to top button when below main photo
+  const observerMainPhoto = useRef();
+  const mainPhotoRef = useCallback((node) => {
+    if (observerMainPhoto.current) observerMainPhoto.current.disconnect();
+    observerMainPhoto.current = new IntersectionObserver((entries) => {
+      if (!entries[0].isIntersecting) setBackToTopButton(true);
+      else setBackToTopButton(false);
+    });
+    if (node) observerMainPhoto.current.observe(node);
   }, []);
-
-  // run on initial load
-  useEffect(() => {
-    console.log("running first useeffect");
-    smoothscroll.polyfill();
-    window.addEventListener("scroll", scrollingFunction);
-
-    fetch(`/api/randomphoto`, { method: "GET" })
-      .then((response) => response.text())
-      .then((result) => {
-        const resultJson = JSON.parse(result);
-        if (Object.keys(resultJson).length === 0) {
-          setMorePhotos(false);
-          return;
-        }
-        setUsername(resultJson.user.username);
-        setMainPhoto(resultJson);
-        setData([]);
-        setPageNumber(1);
-      })
-      .catch((error) => console.log("error", error));
-  }, [scrollingFunction]);
-
-  // run when page scrolled to bottom
-  useEffect(() => {
-    if (!username || !morePhotos) return;
-    setMorePhotos(false);
-
-    console.log("running second useeffect");
-    fetch(`/api/photos?user=${username}&page=${pageNumber}&per_page=${20}`, {
-      method: "GET",
-    })
-      .then((response) => response.text())
-      .then((result) => {
-        const resultJson = JSON.parse(result);
-        if (resultJson.length == 0) {
-          setMorePhotos(false);
-          return;
-        }
-        setData((prevState) => [...prevState, ...resultJson]);
-        setMorePhotos(true);
-      })
-      .catch((error) => console.log("error", error));
-  }, [pageNumber, username, scrollingFunction]);
 
   const imageOverlay = (event) => {
     console.log(event.target);
@@ -77,6 +65,9 @@ export default function Home() {
       event.target.getAttribute("class") + " overlay"
     );
   };
+
+  if (error || initialError) return <p>{error}</p>;
+  if (initialLoading) return <Loader />;
 
   return (
     <div style={{ position: "relative" }}>
@@ -94,7 +85,7 @@ export default function Home() {
       </Head>
 
       {mainPhoto != null && (
-        <div className={styles.mainContainer}>
+        <div className={styles.mainContainer} ref={mainPhotoRef}>
           <Image
             key={mainPhoto?.id}
             layout="fill"
@@ -113,9 +104,8 @@ export default function Home() {
               rel="noreferrer"
               className={styles.userContainer}
             >
-              <div className={styles.userProfile}>
+              <div className={styles.userProfile} key={mainPhoto?.user?.id}>
                 <Image
-                  key={mainPhoto?.user?.id}
                   width="100%"
                   height="100%"
                   objectFit="cover"
@@ -141,12 +131,7 @@ export default function Home() {
             </time>
             <button
               className={styles.mainButton}
-              onClick={() =>
-                scrollTo({
-                  top: innerHeight,
-                  behavior: "smooth",
-                })
-              }
+              onClick={() => scroll.scrollTo(innerHeight)}
             >
               Open
             </button>
@@ -164,13 +149,7 @@ export default function Home() {
           <button
             className={`${styles.whiteButton} ${styles.backToTopButton}`}
             style={{ opacity: backToTopButton ? 1 : 0 }}
-            onClick={() => [
-              scrollTo({
-                top: 0,
-                behavior: "smooth",
-              }),
-              setBackToTopButton(false),
-            ]}
+            onClick={() => scroll.scrollTo(0)}
             disabled={!backToTopButton}
           >
             ↑
@@ -183,25 +162,31 @@ export default function Home() {
         className="my-masonry-grid"
         columnClassName="my-masonry-grid_column"
       >
-        {data.map((photo) => (
-          <div style={{ position: "relative" }} key={photo?.id}>
-            <Image
-              onClick={imageOverlay}
-              className={styles.image}
-              height={photo?.height}
-              width={photo?.width}
-              placeholder="blur"
-              blurDataURL={photo?.urls?.thumb}
-              src={photo?.urls?.regular}
-              objectFit="cover"
-              alt={photo?.alt_description}
-              quality={75}
-            />
-            <p className={styles.imageLikes}>&hearts; {photo?.likes}</p>
-          </div>
-        ))}
+        {data.map((photo, index) => {
+          return (
+            <div
+              style={{ position: "relative" }}
+              key={photo?.id}
+              ref={data.length === index + 1 ? lastElement : null}
+            >
+              <Image
+                onClick={imageOverlay}
+                className={styles.image}
+                height={photo?.height}
+                width={photo?.width}
+                placeholder="blur"
+                blurDataURL={photo?.urls?.thumb}
+                src={photo?.urls?.regular}
+                objectFit="cover"
+                alt={photo?.alt_description}
+                quality={75}
+              />
+              <p className={styles.imageLikes}>&hearts; {photo?.likes}</p>
+            </div>
+          );
+        })}
       </Masonry>
-      {morePhotos && <Loader />}
+      {loading && <Loader />}
     </div>
   );
 }

@@ -43,7 +43,7 @@
   font-family: inherit;
   font-size: 12pt;
   font-weight: 300;
-  transition: all 0.125s;
+  transition: all 0.25s;
   margin-bottom: 3em;
 }
 
@@ -65,6 +65,8 @@
 .mainButton:hover {
   cursor: pointer;
   background-color: rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+
 }
 
 .imageLikes {
@@ -93,6 +95,10 @@
   box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
 
+.whiteButton:disabled {
+cursor: unset;
+}
+
 .refreshButton {
   position: absolute;
   top: 2em;
@@ -114,6 +120,7 @@
   width: 5em;
   height: 5em;
   margin: auto;
+  transition: all 0.25s;
 }
 
 .userContainer {
@@ -122,6 +129,10 @@
 
 .profileImage {
   border-radius: 50%;
+}
+
+.userProfile:hover {
+  transform: scale(1.05);
 }
 
 @media screen and (max-width: 980px) {
