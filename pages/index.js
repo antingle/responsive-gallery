@@ -32,7 +32,7 @@ export default function Home() {
       setURL(
         `/api/photos?user=${
           mainPhoto.user.username
-        }&page=${pageNumber}&per_page=${15}`
+        }&page=${pageNumber}&per_page=${12}`
       );
     } catch (e) {
       console.log(e);
@@ -101,6 +101,7 @@ export default function Home() {
             quality={75}
             className={styles.mainImage}
             alt={mainPhoto?.alt_description}
+            priority={true}
           />
           <header className={styles.mainHeader}>
             <a
